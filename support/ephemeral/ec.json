@@ -1,0 +1,19 @@
+{
+    "apiVersion": "v1",
+    "kind": "EphemeralContainers",
+    "metadata": {
+	    "name": "test"
+    },
+    "ephemeralContainers": [{
+    	"command": [
+       		"sh"
+    	],
+        "targetContainerName": "test",
+    	"image": "busybox",
+    	"imagePullPolicy": "Always",
+    	"name": "debugger",
+    	"stdin": true,
+    	"tty": true,
+    	"terminationMessagePolicy": "File"
+    }]
+}

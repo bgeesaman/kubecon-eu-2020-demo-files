@@ -1,0 +1,10 @@
+echo "source extractsslkeys.star" | dlv attach `pidof kube-apiserver` > raw_output
+
+echo raw_output | grep "^\[\]" | ./debug2ssllog.sh > sslkeyfile.txt
+
+--- 
+tshark -s0 -w ssltest.pcap -i eth0 port 6443
+
+tshark -r ssltest.pcap -q -o tls.keylog_file:/tmp/sslkeylog.txt -o tls.desegment_ssl_records:TRUE -o tls.desegment_ssl_application_data:TRUE -z follow,ssl,ascii,1
+
+tshark -r ssltest.pcap -q -o tls.keylog_file:/tmp/sslkeylog.txt -o tls.desegment_ssl_records:TRUE -o tls.desegment_ssl_application_data:TRUE -O http2 -2 -R "http2"

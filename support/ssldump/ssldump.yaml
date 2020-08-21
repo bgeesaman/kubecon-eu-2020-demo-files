@@ -1,0 +1,44 @@
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: ssldump
+  labels:
+    app: ssldump
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: ssldump
+  template:
+    metadata:
+      name: ssldump
+      labels:
+        app: ssldump
+    spec:
+      hostNetwork: true
+      hostPID: true
+      containers:
+        - name: dumper
+          image: nginx:latest
+          resources:
+            limits:
+              cpu: 1 
+              memory: 1Gi
+            requests:
+              cpu: 200m
+              memory: 512Mi
+          securityContext:
+            privileged: true
+          volumeMounts:
+          - mountPath: /etc/kubernetes/pki
+            name: pki
+      nodeSelector:
+        "node-role.kubernetes.io/master": ""
+      tolerations:
+        - effect: NoSchedule
+          key: node-role.kubernetes.io/master
+      volumes:
+      - name: pki
+        hostPath:
+          path: /etc/kubernetes/pki

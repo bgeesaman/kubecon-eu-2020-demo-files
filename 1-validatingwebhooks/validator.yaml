@@ -1,0 +1,96 @@
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: validator
+data:
+  default.conf: |
+    log_format post_logs escape=json '[$time_local] "$request" $status '  
+                     '$body_bytes_sent "$http_referer" '        
+                     '"$http_user_agent" $request_body';
+    server {
+            client_body_in_single_buffer on;
+            client_body_buffer_size 16k;
+            access_log /dev/stdout post_logs;
+            error_log /dev/stderr;
+
+            listen 80;
+            listen 443 ssl;
+
+            root /usr/share/nginx/html;
+            index index.html;
+
+            server_name localhost;
+            ssl_certificate /etc/nginx/ssl/cert.pem;
+            ssl_certificate_key /etc/nginx/ssl/key.pem;
+
+            location / {
+                    return 200 'ok';
+            }
+            location /validator {
+                    proxy_pass http://127.0.0.1/ok;
+            }
+            location /ok {
+                    types {}
+                    default_type application/json;
+                    return 200 '{"response": {"allowed": true, "status": {"message": "permission granted"}}}';
+
+            }
+    }
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: validator
+  labels:
+    app: validator
+spec:
+  type: ClusterIP
+  ports:
+    - port: 443
+      targetPort: 443
+  selector:
+    app: validator
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: validator
+  labels:
+    app: validator
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: validator
+  template:
+    metadata:
+      name: validator
+      labels:
+        app: validator
+    spec:
+      containers:
+        - name: validator
+          image: nginx:latest
+          imagePullPolicy: Always
+          resources:
+            limits:
+              cpu: 500m
+              memory: 128Mi
+            requests:
+              cpu: 250m
+              memory: 64Mi
+          ports:
+          - containerPort: 443
+          volumeMounts:
+          - mountPath: /etc/nginx/ssl
+            name: validator-ssl
+          - mountPath: /etc/nginx/conf.d
+            name: validator-config
+      volumes:
+      - name: validator-ssl
+        secret:
+          secretName: validator
+      - name: validator-config
+        configMap:
+          name: validator

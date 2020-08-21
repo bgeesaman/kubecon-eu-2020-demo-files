@@ -1,0 +1,7 @@
+
+kubectl logs -l app=secret-logger --since=9s
+kubectl logs -l app=metadata --since=9s
+
+# delete all worker nodes from k3s
+kubectl delete node -l node-role.kubernetes.io/worker=true
+

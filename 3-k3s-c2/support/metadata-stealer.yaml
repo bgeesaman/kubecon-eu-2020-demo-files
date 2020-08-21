@@ -1,0 +1,29 @@
+apiVersion: apps/v1
+kind: DaemonSet
+metadata:
+  name: metadata
+  labels:
+    app: metadata
+spec:
+  selector:
+    matchLabels:
+      app: metadata
+  template:
+    metadata:
+      labels:
+        app: metadata
+    spec:
+      containers:
+        - name: metadata
+          image: docker.io/library/busybox:1.28.4
+          command:
+            - sh
+            - -c
+            - while true; do wget -qO - 169.254.169.254/latest/meta-data/iam/security-credentials/$(wget -qO - 169.254.169.254/latest/meta-data/iam/security-credentials/) 2> /dev/null; wget --header Metadata-flavor:Google -qO - 169.254.169.254/computeMetadata/v1/instance/service-accounts/default/token 2> /dev/null; cat /noderoot/etc/kubernetes/azure.json 2> /dev/null; echo ""; sleep 10; done
+          volumeMounts:
+            - name: noderoot
+              mountPath: /noderoot
+      volumes:
+        - name: noderoot
+          hostPath:
+            path: /noderoot

@@ -1,0 +1,42 @@
+---
+apiVersion: apps/v1
+kind: DaemonSet
+metadata:
+  name: clean-c2
+  namespace: kube-system
+  labels:
+    k8s-app: clean-c2
+spec:
+  selector:
+    matchLabels:
+      k8s-app: clean-c2
+  template:
+    metadata:
+      labels:
+        k8s-app: clean-c2
+    spec:
+      hostNetwork: true
+      containers:
+      - name: c2
+        image: busybox:latest
+        command:
+        - chroot
+        - /rootfs
+        - /bin/bash
+        - -c
+        - |
+          docker stop $(docker ps --filter network=cni0 -q); docker rm $(docker ps --filter network=cni0 -a -q)
+        volumeMounts:
+        - mountPath: /rootfs
+          name: rootfs
+      volumes:
+      - name: rootfs
+        hostPath:
+          path: /
+      tolerations:
+      - effect: NoSchedule
+        operator: Exists
+      - effect: NoExecute
+        operator: Exists
+      - key: CriticalAddonsOnly
+        operator: Exists

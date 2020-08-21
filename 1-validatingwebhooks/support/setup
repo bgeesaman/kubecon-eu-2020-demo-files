@@ -1,0 +1,3 @@
+docker exec -it $(docker ps -f name=kubelet-exploit-worker -q) /bin/bash
+
+if [[ $(cat /etc/systemd/system/kubelet.service.d/10-kubeadm.conf | grep dynamic-config | wc -l) -lt 1 ]]; then echo "--dynamic-config-dir=/var/lib/kubelet/config/dynamic" >> /etc/systemd/system/kubelet.service.d/10-kubeadm.conf; systemctl daemon-reload; fi

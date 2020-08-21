@@ -1,0 +1,4 @@
+
+kubectl get validatingwebhookconfiguration
+
+kubectl create secret generic honk --from-literal=honk=kubeconeu2020
